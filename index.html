@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orion Dev Core</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3094/3094894.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Mobile Optimizations */
+        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-panel { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+    </style>
+</head>
+<body class="bg-slate-950 text-white select-none">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { 
+            Home, Terminal, MessageSquare, Settings, Mic, Sun, Moon, 
+            PlayCircle, CloudSun, Github, MessageCircle, Mail, CheckSquare, 
+            Briefcase, Code, Zap, Bot, Cpu, Feather, TrendingUp, Copy, Check 
+        } = lucide;
+
+        // --- COMPONENTS ---
+
+        // 1. DASHBOARD
+        const Dashboard = ({ theme, user }) => {
+            const playMusic = () => {
+                // DEEP LINK: Opens a mix in YouTube Music App
+                window.location.href = "https://music.youtube.com/watch?v=lTRiuFIWV54&list=RDAMVMlTRiuFIWV54"; 
+            };
+
+            return (
+                <div className="space-y-6 pb-24 animate-fade-in">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600">
+                                Good morning, {user || 'Boss'}
+                            </h1>
+                            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                                The team is ready.
+                            </p>
+                        </div>
+                        <div className={`flex flex-col items-end ${theme === 'dark' ? 'text-cyan-400' : 'text-blue-600'}`}>
+                            <CloudSun size={28} />
+                            <span className="text-xs font-bold mt-1">24°C Durban</span>
+                        </div>
+                    </div>
+
+                    {/* Music Controller */}
+                    <div className={`p-4 rounded-2xl shadow-lg border relative overflow-hidden group transition-all active:scale-95
+                        ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-blue-100'}`}>
+                        <div className="flex justify-between items-center z-10 relative">
+                            <div>
+                                <h3 className={`font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                                    Deep Focus
+                                </h3>
+                                <p className="text-xs text-gray-400">Launch YouTube Music Mix</p>
+                            </div>
+                            <button 
+                                onClick={playMusic}
+                                className="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 shadow-lg shadow-red-500/30"
+                            >
+                                <PlayCircle size={28} fill="currentColor" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Quick Actions */}
+                    <div className="grid grid-cols-3 gap-3">
+                        {[
+                            { icon: MessageCircle, label: "WhatsApp", color: "bg-green-500", link: "https://wa.me/" },
+                            { icon: Github, label: "GitHub", color: "bg-gray-700", link: "https://github.com/" },
+                            { icon: Mail, label: "Gmail", color: "bg-red-500", link: "mailto:" },
+                        ].map((item, idx) => (
+                            <a key={idx} href={item.link} target="_blank" className={`flex flex-col items-center justify-center p-3 rounded-xl shadow-sm border transition active:scale-95
+                                ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                                <div className={`${item.color} text-white p-2 rounded-full mb-2`}>
+                                    <item.icon size={20} />
+                                </div>
+                                <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    {item.label}
+                                </span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. PROMPT ARCHITECT (The Tool)
+        const PromptGen = ({ theme }) => {
+            const [platform, setPlatform] = useState('Gemini 2.0 Flash');
+            const [persona, setPersona] = useState('Senior Full Stack Dev');
+            const [idea, setIdea] = useState('');
+            const [copied, setCopied] = useState(false);
+
+            const generatePrompt = () => {
+                const text = `ACT AS: ${persona}.\nPLATFORM: ${platform}.\nTASK: Create a professional application based on the following requirements:\n"${idea}"\n\nCONSTRAINTS:\n- Use clean, modular code.\n- Include comments explaining logic.\n- Optimized for Mobile PWA.`;
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="space-y-5 pb-24">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Terminal className="text-purple-500" />
+                        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Prompt Architect</h2>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border space-y-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        {/* Selectors */}
+                        <div className="grid grid-cols-1 gap-3">
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase">Platform</label>
+                                <select value={platform} onChange={e => setPlatform(e.target.value)} className={`w-full p-3 rounded-lg mt-1 outline-none ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+                                    <option>Gemini 2.0 Flash</option>
+                                    <option>Claude 3.5 Sonnet</option>
+                                    <option>Perplexity Pro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-gray-500 uppercase">Persona</label>
+                                <select value={persona} onChange={e => setPersona(e.target.value)} className={`w-full p-3 rounded-lg mt-1 outline-none ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+                                    <option>Senior Full Stack Dev</option>
+                                    <option>Google App Script Expert</option>
+                                    <option>Security Engineer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Input */}
+                        <textarea 
+                            value={idea}
+                            onChange={e => setIdea(e.target.value)}
+                            placeholder="Describe your app idea here..."
+                            className={`w-full h-32 p-3 rounded-lg resize-none outline-none ${theme === 'dark' ? 'bg-gray-900 text-white placeholder-gray-600' : 'bg-gray-50 text-gray-900'}`}
+                        ></textarea>
+
+                        {/* Action */}
+                        <button onClick={generatePrompt} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2">
+                            {copied ? <Check size={20}/> : <Copy size={20}/>}
+                            {copied ? 'Copied to Clipboard!' : 'Generate & Copy'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 3. APP FACTORY (Business Suites)
+        const AppFactory = ({ theme }) => {
+            const [template, setTemplate] = useState('Orion Hotel Suite');
+            const [owner, setOwner] = useState('');
+            const [copied, setCopied] = useState(false);
+
+            const generateSuite = () => {
+                const text = `TASK: Build the ${template}.\nOWNER: ${owner}\nREQUIREMENTS:\n- Professional UI/UX\n- Integration with Google Sheets\n- Dashboard for analytics\n- API placeholders for Yoco & WhatsApp.\n\nTECHNOLOGY: Google App Script + HTML/CSS (Single File Deployment).`;
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div className="space-y-5 pb-24">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Briefcase className="text-green-500" />
+                        <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>App Factory</h2>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border space-y-4 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <p className="text-sm text-gray-500">Select a business template to auto-generate the code structure.</p>
+                        
+                        {/* Template Select */}
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Suite Type</label>
+                            <select value={template} onChange={e => setTemplate(e.target.value)} className={`w-full p-3 rounded-lg mt-1 outline-none ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+                                <option>Orion Hotel Suite</option>
+                                <option>Orion Legal Suite</option>
+                                <option>Orion Mobile POS</option>
+                            </select>
+                        </div>
+
+                        {/* Details */}
+                        <div>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Business Owner</label>
+                            <input 
+                                type="text"
+                                value={owner}
+                                onChange={e => setOwner(e.target.value)}
+                                placeholder="Enter Owner Name"
+                                className={`w-full p-3 rounded-lg mt-1 outline-none ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}
+                            />
+                        </div>
+
+                        <div className={`p-3 rounded-lg border-l-4 border-yellow-500 text-xs ${theme === 'dark' ? 'bg-gray-900 text-gray-400' : 'bg-yellow-50 text-gray-600'}`}>
+                            <b>Note:</b> This will generate a prompt that asks for Yoco & WhatsApp API integration points automatically.
+                        </div>
+
+                        <button onClick={generateSuite} className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95 transition flex justify-center items-center gap-2">
+                            {copied ? <Check size={20}/> : <Zap size={20}/>}
+                            {copied ? 'Prompt Copied!' : 'Build Suite Prompt'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. ORION TEAM (The AI Partners)
+        const Partner = ({ theme }) => {
+            const [activePersona, setActivePersona] = useState('bolt');
+            const [input, setInput] = useState('');
+            const [history, setHistory] = useState(() => {
+                const saved = localStorage.getItem('orion_chat_history');
+                return saved ? JSON.parse(saved) : { bolt: [], mintaka: [], scribe: [], vega: [] };
+            });
+
+            const personas = [
+                { id: 'bolt', name: 'Bolt', role: 'Chief of Staff', color: 'blue', icon: Bot, msg: "Ready for ops." },
+                { id: 'mintaka', name: 'Mintaka', role: 'Code Director', color: 'purple', icon: Cpu, msg: "> System online." },
+                { id: 'scribe', name: 'Scribe', role: 'Email Pro', color: 'orange', icon: Feather, msg: "Drafting mode." },
+                { id: 'vega', name: 'Vega', role: 'Sales Lead', color: 'green', icon: TrendingUp, msg: "Let's grow." },
+            ];
+
+            const current = personas.find(p => p.id === activePersona);
+            const chatEndRef = useRef(null);
+
+            useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [history, activePersona]);
+
+            const handleSend = () => {
+                if (!input.trim()) return;
+                const newMessage = { role: 'user', text: input };
+                const updatedHistory = { ...history, [activePersona]: [...(history[activePersona] || []), newMessage] };
+                setHistory(updatedHistory);
+                localStorage.setItem('orion_chat_history', JSON.stringify(updatedHistory));
+                setInput('');
+                setTimeout(() => {
+                    const aiMsg = { role: 'ai', text: `[${current.name}]: I received: "${newMessage.text}". I am standing by.` };
+                    const withAI = { ...updatedHistory, [activePersona]: [...updatedHistory[activePersona], aiMsg] };
+                    setHistory(withAI);
+                    localStorage.setItem('orion_chat_history', JSON.stringify(withAI));
+                }, 800);
+            };
+
+            return (
+                <div className="flex flex-col h-[80vh]">
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                        {personas.map((p) => (
+                        <button key={p.id} onClick={() => setActivePersona(p.id)}
+                        className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all
+                        ${activePersona === p.id 
+                            ? `bg-${p.color}-600 text-white border-${p.color}-600 scale-105 shadow-md` 
+                            : theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
+                        <p.icon size={18} />
+                        <span className="text-[9px] font-bold mt-1">{p.name}</span>
+                        </button>
+                        ))}
+                    </div>
+
+                    <div className={`flex-1 rounded-2xl p-4 overflow-y-auto space-y-4 mb-4 border hide-scrollbar
+                        ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+                        <div className="text-center text-[10px] opacity-40 uppercase tracking-widest font-bold">
+                            {current.role} Active
+                        </div>
+                        {(history[activePersona] || []).map((msg, i) => (
+                            <div key={i} className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-xs font-bold
+                                    ${msg.role === 'user' ? 'bg-gray-500' : `bg-${current.color}-600`}`}>
+                                    {msg.role === 'user' ? 'ME' : current.name[0]}
+                                </div>
+                                <div className={`p-3 rounded-2xl text-sm max-w-[85%]
+                                    ${msg.role === 'user' 
+                                        ? 'rounded-tr-none bg-gray-700 text-white' 
+                                        : theme === 'dark' ? 'rounded-tl-none bg-gray-800 text-gray-200' : 'rounded-tl-none bg-gray-100 text-gray-800'}`}>
+                                    {msg.text}
+                                </div>
+                            </div>
+                        ))}
+                        <div ref={chatEndRef} />
+                    </div>
+
+                    <div className="relative pb-20">
+                        <input 
+                            value={input} onChange={(e) => setInput(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                            type="text" placeholder={`Message ${current.name}...`}
+                            className={`w-full p-4 pr-12 rounded-full border outline-none shadow-sm
+                            ${theme === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'}`}
+                        />
+                        <button onClick={handleSend} className={`absolute right-2 top-2 p-2 rounded-full text-white bg-${current.color}-600`}>
+                            <Mic size={18} />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 5. MAIN APP
+        const App = () => {
+            const [tab, setTab] = useState('home');
+            const [theme, setTheme] = useState(localStorage.getItem('orion_theme') || 'dark');
+            const [user, setUser] = useState(localStorage.getItem('orion_user') || 'Boss');
+            
+            useEffect(() => {
+                document.body.className = theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-gray-50 text-gray-900';
+                localStorage.setItem('orion_theme', theme);
+            }, [theme]);
+
+            const NavBtn = ({ id, icon: Icon, label }) => (
+                <button onClick={() => setTab(id)} className={`flex flex-col items-center gap-1 transition ${tab === id ? 'text-blue-500' : 'text-gray-400'}`}>
+                    <Icon size={24} strokeWidth={tab === id ? 2.5 : 2} />
+                    <span className="text-[10px] font-medium">{label}</span>
+                </button>
+            );
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen p-5 pt-8 relative">
+                    <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">O</div>
+                            <span className={`font-bold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>ORION<span className="text-blue-500">DEV</span></span>
+                        </div>
+                        <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full bg-gray-800 text-yellow-400">
+                            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                        </button>
+                    </div>
+
+                    {tab === 'home' && <Dashboard theme={theme} user={user} />}
+                    {tab === 'prompt' && <PromptGen theme={theme} />}
+                    {tab === 'factory' && <AppFactory theme={theme} />}
+                    {tab === 'team' && <Partner theme={theme} />}
+
+                    <div className={`fixed bottom-0 left-0 right-0 border-t z-50 max-w-md mx-auto backdrop-blur-lg
+                        ${theme === 'dark' ? 'bg-slate-900/90 border-gray-800' : 'bg-white/90 border-gray-200'}`}>
+                        <div className="flex justify-around p-3">
+                            <NavBtn id="home" icon={Home} label="Home" />
+                            <NavBtn id="prompt" icon={Terminal} label="Prompt" />
+                            <NavBtn id="factory" icon={Briefcase} label="Factory" />
+                            <NavBtn id="team" icon={MessageSquare} label="Team" />
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
