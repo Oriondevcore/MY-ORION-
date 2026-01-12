@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orion Dev Core</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            dark: '#050505',
+                            slate: '#0f172a',
+                            neonBlue: '#3b82f6',
+                            neonPurple: '#a855f7',
+                            neonOrange: '#f97316',
+                            neonGreen: '#22c55e',
+                            glass: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons (Global) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Hide scrollbar for clean mobile UI */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        body { -webkit-tap-highlight-color: transparent; user-select: none; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .mic-pulse {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-cyber-dark text-slate-800 dark:text-gray-200 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- Utils: Icon Component ---
+        const Icon = ({ name, size = 24, className = "" }) => {
+            const iconRef = useRef(null);
+            useEffect(() => {
+                lucide.createIcons({
+                    root: iconRef.current,
+                    nameAttr: 'data-lucide',
+                    attrs: { class: `lucide lucide-${name} ${className}`, width: size, height: size }
+                });
+            }, [name, className, size]);
+            return <span ref={iconRef} data-lucide={name}></span>;
+        };
+
+        // --- Data: Personas ---
+        const PERSONAS = {
+            bolt: { id: 'bolt', name: 'BOLT', role: 'Chief of Staff', color: 'text-cyber-neonBlue', bg: 'bg-blue-500/10', border: 'border-blue-500' },
+            mintaka: { id: 'mintaka', name: 'MINTAKA', role: 'Code Director', color: 'text-cyber-neonPurple font-mono', bg: 'bg-purple-500/10', border: 'border-purple-500' },
+            scribe: { id: 'scribe', name: 'SCRIBE', role: 'Comms Lead', color: 'text-cyber-neonOrange', bg: 'bg-orange-500/10', border: 'border-orange-500' },
+            vega: { id: 'vega', name: 'VEGA', role: 'Growth Lead', color: 'text-cyber-neonGreen', bg: 'bg-green-500/10', border: 'border-green-500' }
+        };
+
+        // --- Component: Voice Input ---
+        const VoiceInput = ({ onResult, isActive }) => {
+            const [listening, setListening] = useState(false);
+            
+            const toggleListen = () => {
+                if (!('webkitSpeechRecognition' in window)) {
+                    alert("Voice not supported on this browser.");
+                    return;
+                }
+                const recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onstart = () => setListening(true);
+                recognition.onend = () => setListening(false);
+                recognition.onresult = (e) => {
+                    const transcript = e.results[0][0].transcript;
+                    onResult(transcript);
+                };
+                
+                recognition.start();
+            };
+
+            if (!isActive) return null;
+
+            return (
+                <button 
+                    onClick={toggleListen}
+                    className={`fixed bottom-24 right-4 z-50 p-4 rounded-full shadow-lg transition-all ${listening ? 'bg-red-500 mic-pulse text-white' : 'bg-cyber-neonBlue text-white'}`}
+                >
+                    <Icon name={listening ? "mic-off" : "mic"} size={24} />
+                </button>
+            );
+        };
+
+        // --- Views ---
+
+        // 1. HOME VIEW
+        const HomeView = () => {
+            const [time, setTime] = useState(new Date());
+
+            const playMusic = () => {
+                // Opens YouTube Music Lofi Playlist
+                window.open("https://music.youtube.com/playlist?list=PL4fGSI1pDJn6puJdseH2t9t0dsbBcFLQI", "_blank");
+            };
+
+            return (
+                <div className="space-y-6 p-4 pt-8 pb-24">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                                Good Morning
+                            </h1>
+                            <p className="text-gray-400">Dev Leader</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden border border-gray-500">
+                             <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Orion" alt="Avatar" />
+                        </div>
+                    </div>
+
+                    {/* Music Controller */}
+                    <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                        <h2 className="text-xl font-bold mb-1">Deep Focus Mode</h2>
+                        <p className="text-xs text-gray-400 mb-4">Cyberpunk LoFi & Synthwave</p>
+                        <button onClick={playMusic} className="w-full py-3 bg-cyber-neonBlue hover:bg-blue-600 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-500/20">
+                            <Icon name="play" size={18} /> Start Focus Music
+                        </button>
+                    </div>
+
+                    {/* Widgets Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2">
+                            <Icon name="cloud-rain" className="text-blue-400" />
+                            <span className="text-sm font-medium">24°C JHB</span>
+                        </div>
+                        <a href="https://wa.me/" target="_blank" className="glass-panel p-4 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-green-500/10 transition-colors">
+                            <Icon name="message-circle" className="text-green-400" />
+                            <span className="text-sm font-medium">WhatsApp</span>
+                        </a>
+                        <a href="https://github.com/" target="_blank" className="col-span-2 glass-panel p-4 rounded-xl flex items-center justify-between hover:bg-gray-700/50 transition-colors">
+                            <div className="flex items-center gap-3">
+                                <Icon name="github" className="text-white" />
+                                <span className="font-medium">Check Pull Requests</span>
+                            </div>
+                            <Icon name="arrow-right" size={16} className="text-gray-500" />
+                        </a>
+                    </div>
+                </div>
+            );
+        };
+
+        // 2. TEAM VIEW (AI PARTNERS)
+        const TeamView = () => {
+            const [activePersona, setActivePersona] = useState(PERSONAS.bolt);
+            const [input, setInput] = useState("");
+            const [history, setHistory] = useState({});
+
+            // Load history
+            useEffect(() => {
+                const saved = localStorage.getItem('orion_chat_history');
+                if (saved) setHistory(JSON.parse(saved));
+            }, []);
+
+            const saveHistory = (newHistory) => {
+                setHistory(newHistory);
+                localStorage.setItem('orion_chat_history', JSON.stringify(newHistory));
+            };
+
+            const sendMessage = (e) => {
+                e.preventDefault();
+                if(!input.trim()) return;
+
+                const currentChat = history[activePersona.id] || [];
+                const updatedChat = [...currentChat, { sender: 'user', text: input }];
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    const aiResponse = { sender: 'ai', text: `[${activePersona.name}]: I've logged that request. Processing logic for "${input}".` };
+                    const finalChat = [...updatedChat, aiResponse];
+                    const newHistory = { ...history, [activePersona.id]: finalChat };
+                    saveHistory(newHistory);
+                }, 800);
+
+                const newHistoryTemp = { ...history, [activePersona.id]: updatedChat };
+                saveHistory(newHistoryTemp);
+                setInput("");
+            };
+
+            const currentMessages = history[activePersona.id] || [];
+
+            return (
+                <div className="flex flex-col h-screen pb-20 pt-4">
+                    {/* Persona Selector */}
+                    <div className="flex overflow-x-auto gap-3 px-4 pb-4 no-scrollbar">
+                        {Object.values(PERSONAS).map(p => (
+                            <button 
+                                key={p.id}
+                                onClick={() => setActivePersona(p)}
+                                className={`flex flex-col items-center min-w-[70px] p-2 rounded-xl border ${activePersona.id === p.id ? `${p.bg} ${p.border}` : 'border-transparent opacity-50'}`}
+                            >
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-gray-800 ${p.color}`}>
+                                    <Icon name={p.id === 'mintaka' ? 'code' : p.id === 'scribe' ? 'feather' : p.id === 'vega' ? 'trending-up' : 'zap'} size={20} />
+                                </div>
+                                <span className={`text-[10px] mt-1 font-bold ${p.color}`}>{p.name}</span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Chat Area */}
+                    <div className="flex-1 overflow-y-auto px-4 space-y-4">
+                        {currentMessages.length === 0 && (
+                            <div className="text-center text-gray-500 mt-10">
+                                <p>Start a conversation with {activePersona.name}</p>
+                                <p className="text-xs opacity-70">{activePersona.role}</p>
+                            </div>
+                        )}
+                        {currentMessages.map((msg, idx) => (
+                            <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${msg.sender === 'user' ? 'bg-blue-600 text-white' : 'glass-panel text-gray-200'}`}>
+                                    {msg.text}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Input */}
+                    <form onSubmit={sendMessage} className="p-4 glass-panel border-t border-gray-800 flex gap-2">
+                        <input 
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder={`Message ${activePersona.name}...`}
+                            className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-600"
+                        />
+                        <button type="submit" className={`${activePersona.color}`}>
+                            <Icon name="send" size={20} />
+                        </button>
+                    </form>
+                </div>
+            );
+        };
+
+        // 3. PROMPT GENERATOR VIEW
+        const PromptView = () => {
+            const [config, setConfig] = useState({ platform: 'Gemini', type: 'React Component', desc: '' });
+            
+            const copyToClipboard = () => {
+                const prompt = `Act as an expert Developer. Platform: ${config.platform}. Task: Create a ${config.type}. Details: ${config.desc}.`;
+                navigator.clipboard.writeText(prompt);
+                alert("Prompt copied to clipboard!");
+            };
+
+            return (
+                <div className="p-4 pt-8 pb-24 space-y-6">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <Icon name="cpu" /> The Architect
+                    </h2>
+                    
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-xs text-gray-400 uppercase tracking-wider">AI Model</label>
+                            <div className="grid grid-cols-2 gap-2 mt-1">
+                                {['Gemini', 'Claude', 'GPT-4', 'DeepSeek'].map(m => (
+                                    <button key={m} onClick={() => setConfig({...config, platform: m})}
+                                        className={`p-3 rounded-lg text-sm border ${config.platform === m ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-gray-700 bg-gray-800'}`}>
+                                        {m}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs text-gray-400 uppercase tracking-wider">Task Type</label>
+                            <select 
+                                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-lg text-white outline-none"
+                                onChange={(e) => setConfig({...config, type: e.target.value})}
+                            >
+                                <option>React Component</option>
+                                <option>SQL Query</option>
+                                <option>Python Script</option>
+                                <option>Marketing Copy</option>
+                                <option>Legal Contract</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="text-xs text-gray-400 uppercase tracking-wider">Description (Voice Enabled)</label>
+                            <textarea 
+                                className="w-full mt-1 p-3 bg-gray-800 border border-gray-700 rounded-lg text-white h-32 focus:border-blue-500 outline-none"
+                                value={config.desc}
+                                onChange={(e) => setConfig({...config, desc: e.target.value})}
+                                placeholder="Describe what you need..."
+                            ></textarea>
+                            {/* Floating Voice Button injects here if needed, globally managed */}
+                        </div>
+
+                        <button onClick={copyToClipboard} className="w-full py-4 bg-cyber-neonPurple hover:bg-purple-600 text-white font-bold rounded-xl shadow-lg shadow-purple-500/20 flex justify-center gap-2">
+                            <Icon name="copy" /> Generate & Copy
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. APP FACTORY VIEW
+        const FactoryView = () => {
+            const [template, setTemplate] = useState(null);
+            const [apiKey, setApiKey] = useState("");
+            const [status, setStatus] = useState("idle"); // idle, generating, done
+
+            const templates = [
+                { id: 1, name: 'Orion Hotel Suite', icon: 'building', keyName: 'Booking Engine API Key' },
+                { id: 2, name: 'Orion Legal Suite', icon: 'scale', keyName: 'Legal DB Access Token' },
+                { id: 3, name: 'Orion Mobile POS', icon: 'credit-card', keyName: 'Yoco/Stripe API Key' },
+            ];
+
+            const handleBuild = () => {
+                if(!apiKey) return alert("API Key Required");
+                setStatus("generating");
+                setTimeout(() => setStatus("done"), 2000);
+            };
+
+            return (
+                <div className="p-4 pt-8 pb-24 space-y-6">
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                        <Icon name="factory" /> App Factory
+                    </h2>
+
+                    {status === 'idle' && (
+                        <div className="grid gap-3">
+                            {templates.map(t => (
+                                <button key={t.id} onClick={() => setTemplate(t)} className={`p-4 rounded-xl border flex items-center gap-4 text-left ${template?.id === t.id ? 'border-green-500 bg-green-500/10' : 'border-gray-700 glass-panel'}`}>
+                                    <div className="p-2 bg-gray-800 rounded-lg text-gray-300">
+                                        <Icon name={t.icon} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-200">{t.name}</h3>
+                                        <p className="text-xs text-gray-500">Click to configure</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {template && status === 'idle' && (
+                        <div className="glass-panel p-5 rounded-xl border border-gray-700 animate-fade-in">
+                            <h3 className="font-bold mb-3 text-green-400">Config: {template.name}</h3>
+                            <label className="text-xs text-gray-400 block mb-1">{template.keyName}</label>
+                            <input 
+                                type="password" 
+                                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg text-white mb-4" 
+                                placeholder="sk_live_..."
+                                value={apiKey}
+                                onChange={(e) => setApiKey(e.target.value)}
+                            />
+                            <button onClick={handleBuild} className="w-full py-3 bg-green-600 rounded-lg font-bold text-white">
+                                Initialize Build
+                            </button>
+                        </div>
+                    )}
+
+                    {status === 'generating' && (
+                        <div className="text-center py-20">
+                            <Icon name="loader-2" className="animate-spin text-blue-500 mx-auto mb-4" size={48} />
+                            <p className="text-blue-400">Compiling Modules...</p>
+                        </div>
+                    )}
+
+                    {status === 'done' && (
+                        <div className="text-center py-20">
+                            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Icon name="check" className="text-white" size={32} />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white">Project Created</h3>
+                            <p className="text-gray-400 mb-6">Files ready in Repo.</p>
+                            <button onClick={() => { setStatus('idle'); setTemplate(null); setApiKey(''); }} className="text-blue-400 underline">Start New</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Main Layout ---
+        const App = () => {
+            const [theme, setTheme] = useState('dark');
+            const [activeTab, setActiveTab] = useState('home');
+            
+            useEffect(() => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [theme]);
+
+            const handleVoice = (text) => {
+                // If in Prompt Gen, populate desc. If in Team, populate input (simplified logic)
+                alert(`Voice captured: ${text}`); 
+            };
+
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'home': return <HomeView />;
+                    case 'team': return <TeamView />;
+                    case 'prompt': return <PromptView />;
+                    case 'factory': return <FactoryView />;
+                    default: return <HomeView />;
+                }
+            };
+
+            return (
+                <div className="min-h-screen relative">
+                    {/* Settings / Toggle Theme Header */}
+                    <div className="fixed top-4 right-4 z-50">
+                        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full glass-panel text-gray-400 hover:text-white">
+                            <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={20} />
+                        </button>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <main className="min-h-screen">
+                        {renderContent()}
+                    </main>
+
+                    {/* Voice Command (Global) */}
+                    <VoiceInput onResult={handleVoice} isActive={true} />
+
+                    {/* Bottom Navigation */}
+                    <nav className="fixed bottom-0 left-0 w-full glass-panel border-t border-gray-800 pb-safe pt-2 px-2 z-40">
+                        <div className="flex justify-around items-center h-16">
+                            {[
+                                { id: 'home', icon: 'home', label: 'Home' },
+                                { id: 'prompt', icon: 'cpu', label: 'Prompt' },
+                                { id: 'factory', icon: 'factory', label: 'Factory' },
+                                { id: 'team', icon: 'users', label: 'Team' }
+                            ].map(tab => (
+                                <button 
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`flex flex-col items-center justify-center w-16 h-14 rounded-xl transition-all ${activeTab === tab.id ? 'text-cyber-neonBlue bg-blue-500/10' : 'text-gray-500'}`}
+                                >
+                                    <Icon name={tab.icon} size={24} />
+                                    <span className="text-[10px] mt-1">{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </nav>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Error', err));
+        }
+    </script>
+</body>
+</html>
